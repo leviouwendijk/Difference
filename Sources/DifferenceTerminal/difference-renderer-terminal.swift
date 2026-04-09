@@ -16,32 +16,22 @@ extension DifferenceRenderer {
             _ difference: TextDifference,
             options: DifferenceTerminalRenderOptions = .init()
         ) -> String {
-            let renderedLines = renderedBodyLines(
-                difference.lines,
+            render(
+                DifferenceLayout.make(
+                    difference,
+                    options: options.base
+                ),
                 options: options
             )
+        }
 
-            var out: [String] = []
-            out.reserveCapacity(renderedLines.count + 2)
-
-            if options.base.showHeader {
-                out.append(
-                    colorize(
-                        "--- \(difference.oldName)",
-                        colors: options.style.headerColors
-                    )
-                )
-                out.append(
-                    colorize(
-                        "+++ \(difference.newName)",
-                        colors: options.style.headerColors
-                    )
-                )
-            }
-
-            out.append(contentsOf: renderedLines)
-
-            return out.joined(separator: "\n")
+        public static func render(
+            _ layout: DifferenceLayout,
+            options: DifferenceTerminalRenderOptions = .init()
+        ) -> String {
+            layout.lines
+                .map { renderLine($0, options: options) }
+                .joined(separator: "\n")
         }
 
         public static func print(
@@ -56,80 +46,35 @@ extension DifferenceRenderer {
             )
         }
 
-        private static func renderedBodyLines(
-            _ lines: [DifferenceLine],
-            options: DifferenceTerminalRenderOptions
-        ) -> [String] {
-            if options.base.showUnchangedLines || options.base.contextLineCount == .max {
-                return lines.map {
-                    styledLine($0, options: options)
-                }
-            }
-
-            let context = max(0, options.base.contextLineCount)
-            let indicesToShow = visibleLineIndices(
-                lines: lines,
-                contextLineCount: context
-            )
-
-            guard !indicesToShow.isEmpty else {
-                return []
-            }
-
-            var out: [String] = []
-            var previousIndex: Int?
-
-            for index in indicesToShow.sorted() {
-                if let previousIndex,
-                   index > previousIndex + 1 {
-                    out.append(
-                        colorize(
-                            options.base.collapseSeparator,
-                            colors: options.style.separatorColors
-                        )
-                    )
-                }
-
-                out.append(
-                    styledLine(
-                        lines[index],
-                        options: options
-                    )
+        public static func print(
+            _ layout: DifferenceLayout,
+            options: DifferenceTerminalRenderOptions = .init()
+        ) {
+            Swift.print(
+                render(
+                    layout,
+                    options: options
                 )
-
-                previousIndex = index
-            }
-
-            return out
+            )
         }
 
-        private static func visibleLineIndices(
-            lines: [DifferenceLine],
-            contextLineCount: Int
-        ) -> Set<Int> {
-            var visible: Set<Int> = []
-
-            for (index, line) in lines.enumerated() {
-                guard line.operation != .equal else {
-                    continue
-                }
-
-                let lowerBound = max(0, index - contextLineCount)
-                let upperBound = min(lines.count - 1, index + contextLineCount)
-
-                for visibleIndex in lowerBound...upperBound {
-                    visible.insert(visibleIndex)
-                }
-            }
-
-            return visible
-        }
-
-        private static func styledLine(
-            _ line: DifferenceLine,
+        private static func renderLine(
+            _ line: DifferenceLayout.Line,
             options: DifferenceTerminalRenderOptions
         ) -> String {
-            switch line.operation {
+            switch line.role {
+            case .headerOld:
+                return colorize(
+                    "--- \(line.text)",
+                    colors: options.style.headerColors
+                )
+
+            case .headerNew:
+                return colorize(
+                    "+++ \(line.text)",
+                    colors: options.style.headerColors
+                )
+
             case .equal:
                 return colorize(
                     options.base.equalPrefix + line.text,
@@ -146,6 +91,12 @@ extension DifferenceRenderer {
                 return colorize(
                     options.base.deletePrefix + line.text,
                     colors: options.style.deleteColors
+                )
+
+            case .separator:
+                return colorize(
+                    line.text,
+                    colors: options.style.separatorColors
                 )
             }
         }
