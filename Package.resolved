@@ -1,0 +1,15 @@
+{
+  "originHash" : "5d7d222d8577c10de8c566159e099c69f22271710631c2a856129765d81fe945",
+  "pins" : [
+    {
+      "identity" : "terminal",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leviouwendijk/Terminal",
+      "state" : {
+        "branch" : "master",
+        "revision" : "27a5abad97d8604a9314e00e6e7e6a6a7000f26b"
+      }
+    }
+  ],
+  "version" : 3
+}
