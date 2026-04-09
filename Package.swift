@@ -5,9 +5,6 @@ import PackageDescription
 
 let package = Package(
     name: "Difference",
-    platforms: [
-        .macOS(.v11)
-    ],
     products: [
         .library(
             name: "Difference",
@@ -19,7 +16,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/leviouwendijk/Terminal", branch: "master"),
+        .package(url: "https://github.com/leviouwendijk/ANSI", branch: "master"),
     ],
     targets: [
         .target(
@@ -29,7 +26,7 @@ let package = Package(
             name: "DifferenceTerminal",
             dependencies: [
                 "Difference",
-                .product(name: "Terminal", package: "Terminal"),
+                .product(name: "ANSI", package: "ANSI"),
             ]
         ),
         .testTarget(

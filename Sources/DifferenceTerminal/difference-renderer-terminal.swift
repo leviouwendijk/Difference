@@ -1,5 +1,5 @@
 import Difference
-import Terminal
+import ANSI
 
 extension DifferenceRenderer {
     public enum Terminal {

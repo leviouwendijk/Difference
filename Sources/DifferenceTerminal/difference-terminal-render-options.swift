@@ -1,5 +1,5 @@
 import Difference
-import Terminal
+import ANSI
 
 public struct DifferenceTerminalStyle: Sendable, Hashable {
     public var headerColors: [ANSIColor]
