@@ -1,6 +1,15 @@
 extension DifferenceRenderer {
     public enum Basic {
         public static func render(
+            _ difference: TextDifference
+        ) -> String {
+            render(
+                difference,
+                options: .unified
+            )
+        }
+
+        public static func render(
             _ difference: TextDifference,
             options: DifferenceRenderOptions = .unified
         ) -> String {

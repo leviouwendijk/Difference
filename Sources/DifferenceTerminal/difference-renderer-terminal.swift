@@ -4,6 +4,15 @@ import ANSI
 extension DifferenceRenderer {
     public enum Terminal {
         public static func render(
+            _ difference: TextDifference
+        ) -> String {
+            render(
+                difference,
+                options: .init()
+            )
+        }
+
+        public static func render(
             _ difference: TextDifference,
             options: DifferenceTerminalRenderOptions = .init()
         ) -> String {
@@ -151,6 +160,14 @@ extension DifferenceRenderer {
 
             let prefix = colors.map(\.rawValue).joined()
             return "\(prefix)\(string)\(ANSIColor.reset.rawValue)"
+        }
+    }
+
+    public enum ANSI: DifferenceRendering {
+        public static func render(
+            _ difference: TextDifference
+        ) -> String {
+            Terminal.render(difference)
         }
     }
 }
