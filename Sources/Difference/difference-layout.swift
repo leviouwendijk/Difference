@@ -1,5 +1,5 @@
-public struct DifferenceLayout: Sendable, Hashable {
-    public struct Line: Sendable, Hashable {
+public struct DifferenceLayout: Sendable, Codable, Hashable {
+    public struct Line: Sendable, Codable, Hashable {
         public let role: Role
         public let text: String
 
