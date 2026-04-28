@@ -10,28 +10,28 @@ let package = Package(
             name: "Difference",
             targets: ["Difference"]
         ),
-        .library(
-            name: "DifferenceTerminal",
-            targets: ["DifferenceTerminal"]
-        ),
+        // .library(
+        //     name: "DifferenceTerminal",
+        //     targets: ["DifferenceTerminal"]
+        // ),
     ],
-    dependencies: [
-        .package(url: "https://github.com/leviouwendijk/ANSI", branch: "master"),
-    ],
+    // dependencies: [
+    //     .package(url: "https://github.com/leviouwendijk/ANSI", branch: "master"),
+    // ],
     targets: [
         .target(
             name: "Difference"
         ),
-        .target(
-            name: "DifferenceTerminal",
-            dependencies: [
-                "Difference",
-                .product(name: "ANSI", package: "ANSI"),
-            ]
-        ),
-        .testTarget(
-            name: "DifferenceTests",
-            dependencies: ["Difference"]
-        ),
+        // .target(
+        //     name: "DifferenceTerminal",
+        //     dependencies: [
+        //         "Difference",
+        //         .product(name: "ANSI", package: "ANSI"),
+        //     ]
+        // ),
+        // .testTarget(
+        //     name: "DifferenceTests",
+        //     dependencies: ["Difference"]
+        // ),
     ]
 )

@@ -1,6 +1,7 @@
 import Difference
 import ANSI
 
+@available(*, deprecated, message: "Use TerminalDifferenceRenderOptions from the Terminal package.")
 public struct DifferenceTerminalStyle: Sendable, Hashable {
     public var headerColors: [ANSIColor]
     public var equalColors: [ANSIColor]
@@ -25,6 +26,7 @@ public struct DifferenceTerminalStyle: Sendable, Hashable {
     public static let `default` = Self()
 }
 
+@available(*, deprecated, message: "Use TerminalDifferenceRenderOptions from the Terminal package.")
 public struct DifferenceTerminalRenderOptions: Sendable, Hashable {
     public var base: DifferenceRenderOptions
     public var style: DifferenceTerminalStyle

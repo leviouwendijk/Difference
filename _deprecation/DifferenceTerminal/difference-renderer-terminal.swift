@@ -1,6 +1,7 @@
 import Difference
 import ANSI
 
+@available(*, deprecated, message: "Use TerminalDifferenceRenderer from the Terminal package.")
 extension DifferenceRenderer {
     public enum Terminal {
         public static func render(
