@@ -40,6 +40,7 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
         collapseSeparator: String = " ...",
         lineComponents: [DifferenceLineRenderComponent] = [
             .lineNumbers,
+            .border,
             .marker,
             .text,
         ],
