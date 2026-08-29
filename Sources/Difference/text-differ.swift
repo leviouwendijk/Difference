@@ -73,14 +73,32 @@ public enum TextDiffer {
     private static func normalizedLines(
         _ string: String
     ) -> [String] {
-        string
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
+        let normalized = string
+            .replacingOccurrences(
+                of: "\r\n",
+                with: "\n"
+            )
+            .replacingOccurrences(
+                of: "\r",
+                with: "\n"
+            )
+
+        guard !normalized.isEmpty else {
+            return []
+        }
+
+        var lines = normalized
             .split(
                 separator: "\n",
                 omittingEmptySubsequences: false
             )
             .map(String.init)
+
+        if normalized.hasSuffix("\n") {
+            lines.removeLast()
+        }
+
+        return lines
     }
 
     private static func lcsTable(
