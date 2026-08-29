@@ -26,6 +26,7 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
 
     public var lineComponents: [DifferenceLineRenderComponent]
     public var lineNumberFormat: DifferenceLineNumberFormat
+    public var missingLineNumberCharacter: Character
     public var componentSpacing: Int
 
     public var equalMarker: String
@@ -45,6 +46,7 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
             .text,
         ],
         lineNumberFormat: DifferenceLineNumberFormat = .compact,
+        missingLineNumberCharacter: Character = "-",
         componentSpacing: Int = 1,
         equalMarker: String = " ",
         insertMarker: String = "+",
@@ -59,6 +61,7 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
             lineComponents
         )
         self.lineNumberFormat = lineNumberFormat
+        self.missingLineNumberCharacter = missingLineNumberCharacter
         self.componentSpacing = max(
             0,
             componentSpacing

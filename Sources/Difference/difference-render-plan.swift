@@ -143,7 +143,8 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
                 text: lineNumbers(
                     for: line,
                     width: lineNumberWidth,
-                    format: options.lineNumberFormat
+                    format: options.lineNumberFormat,
+                    missingCharacter: options.missingLineNumberCharacter
                 )
             )
 
@@ -216,15 +217,18 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
     private static func lineNumbers(
         for line: DifferenceLayout.Line,
         width: Int,
-        format: DifferenceLineNumberFormat
+        format: DifferenceLineNumberFormat,
+        missingCharacter: Character
     ) -> String {
         let old = lineNumber(
             line.oldLine,
-            width: width
+            width: width,
+            missingCharacter: missingCharacter
         )
         let new = lineNumber(
             line.newLine,
-            width: width
+            width: width,
+            missingCharacter: missingCharacter
         )
 
         switch format {
@@ -238,11 +242,12 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
 
     private static func lineNumber(
         _ value: Int?,
-        width: Int
+        width: Int,
+        missingCharacter: Character
     ) -> String {
         guard let value else {
             return String(
-                repeating: " ",
+                repeating: missingCharacter,
                 count: width
             )
         }
