@@ -25,6 +25,7 @@ public struct DifferenceLayout: Sendable, Codable, Hashable {
         case insert
         case delete
         case separator
+        case endOfFile
     }
 
     public let lines: [Line]

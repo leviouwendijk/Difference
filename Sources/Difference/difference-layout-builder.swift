@@ -27,6 +27,17 @@ extension DifferenceLayout {
 
         out.append(contentsOf: body)
 
+        if shouldShowEndOfFile(
+            options
+        ) {
+            out.append(
+                .init(
+                    role: .endOfFile,
+                    text: "EOF"
+                )
+            )
+        }
+
         return .init(lines: out)
     }
 
@@ -73,7 +84,29 @@ extension DifferenceLayout {
             previousIndex = index
         }
 
+        if shouldShowEndOfFile(
+            options
+        ),
+           let previousIndex,
+           previousIndex < lines.count - 1 {
+            out.append(
+                .init(
+                    role: .separator,
+                    text: options.collapseSeparator
+                )
+            )
+        }
+
         return out
+    }
+
+    private static func shouldShowEndOfFile(
+        _ options: DifferenceRenderOptions
+    ) -> Bool {
+        options.showEndOfFile
+            && options.lineComponents.contains(
+                .lineNumbers
+            )
     }
 
     private static func visibleLineIndices(

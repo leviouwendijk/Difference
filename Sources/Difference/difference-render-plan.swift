@@ -108,6 +108,17 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
                 componentSpacing: 0
             )
 
+        case .endOfFile:
+            return .init(
+                role: line.role,
+                segments: endOfFileSegments(
+                    for: line,
+                    lineNumberWidth: lineNumberWidth,
+                    options: options
+                ),
+                componentSpacing: options.componentSpacing
+            )
+
         case .equal,
              .insert,
              .delete:
@@ -171,6 +182,49 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
         }
     }
 
+    private static func endOfFileSegments(
+        for line: DifferenceLayout.Line,
+        lineNumberWidth: Int,
+        options: DifferenceRenderOptions
+    ) -> [Segment] {
+        let gutterWidth = max(
+            line.text.count,
+            lineNumberGutterWidth(
+                columnWidth: lineNumberWidth,
+                format: options.lineNumberFormat
+            )
+        )
+        let label = String(
+            repeating: " ",
+            count: max(
+                0,
+                gutterWidth - line.text.count
+            )
+        ) + line.text
+
+        return options.lineComponents.compactMap {
+            component in
+
+            switch component {
+            case .lineNumbers:
+                return .init(
+                    component: component,
+                    text: label
+                )
+
+            case .border:
+                return .init(
+                    component: component,
+                    text: options.border
+                )
+
+            case .marker,
+                 .text:
+                return nil
+            }
+        }
+    }
+
     private static func marker(
         for role: DifferenceLayout.Role,
         options: DifferenceRenderOptions
@@ -187,7 +241,8 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
 
         case .headerOld,
              .headerNew,
-             .separator:
+             .separator,
+             .endOfFile:
             return ""
         }
     }
@@ -212,6 +267,19 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
             }
             .max()
             ?? 0
+    }
+
+    private static func lineNumberGutterWidth(
+        columnWidth: Int,
+        format: DifferenceLineNumberFormat
+    ) -> Int {
+        switch format {
+        case .compact:
+            return columnWidth * 2 + 1
+
+        case .columns:
+            return columnWidth * 2 + 2
+        }
     }
 
     private static func lineNumbers(
