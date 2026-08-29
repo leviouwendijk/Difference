@@ -105,19 +105,25 @@ extension DifferenceLayout {
         case .equal:
             return .init(
                 role: .equal,
-                text: line.text
+                text: line.text,
+                oldLine: line.oldLine,
+                newLine: line.newLine
             )
 
         case .insert:
             return .init(
                 role: .insert,
-                text: line.text
+                text: line.text,
+                oldLine: line.oldLine,
+                newLine: line.newLine
             )
 
         case .delete:
             return .init(
                 role: .delete,
-                text: line.text
+                text: line.text,
+                oldLine: line.oldLine,
+                newLine: line.newLine
             )
         }
     }

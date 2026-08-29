@@ -26,9 +26,33 @@ extension DifferenceRenderer {
             _ layout: DifferenceLayout,
             options: DifferenceRenderOptions = .unified
         ) -> String {
-            layout.lines
-                .map { renderLine($0, options: options) }
-                .joined(separator: "\n")
+            render(
+                DifferenceRenderPlan.make(
+                    layout,
+                    options: options
+                )
+            )
+        }
+
+        public static func render(
+            _ plan: DifferenceRenderPlan
+        ) -> String {
+            plan.lines
+                .map {
+                    let spacing = String(
+                        repeating: " ",
+                        count: $0.componentSpacing
+                    )
+
+                    return $0.segments
+                        .map(\.text)
+                        .joined(
+                            separator: spacing
+                        )
+                }
+                .joined(
+                    separator: "\n"
+                )
         }
 
         public static func plain(
@@ -49,31 +73,6 @@ extension DifferenceRenderer {
                 layout,
                 options: options
             )
-        }
-
-        private static func renderLine(
-            _ line: DifferenceLayout.Line,
-            options: DifferenceRenderOptions
-        ) -> String {
-            switch line.role {
-            case .headerOld:
-                return "--- \(line.text)"
-
-            case .headerNew:
-                return "+++ \(line.text)"
-
-            case .equal:
-                return options.equalPrefix + line.text
-
-            case .insert:
-                return options.insertPrefix + line.text
-
-            case .delete:
-                return options.deletePrefix + line.text
-
-            case .separator:
-                return line.text
-            }
         }
     }
 }

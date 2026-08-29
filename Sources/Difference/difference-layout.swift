@@ -2,13 +2,19 @@ public struct DifferenceLayout: Sendable, Codable, Hashable {
     public struct Line: Sendable, Codable, Hashable {
         public let role: Role
         public let text: String
+        public let oldLine: Int?
+        public let newLine: Int?
 
         public init(
             role: Role,
-            text: String
+            text: String,
+            oldLine: Int? = nil,
+            newLine: Int? = nil
         ) {
             self.role = role
             self.text = text
+            self.oldLine = oldLine
+            self.newLine = newLine
         }
     }
 

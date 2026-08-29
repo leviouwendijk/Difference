@@ -27,7 +27,9 @@ public enum TextDiffer {
                 reversed.append(
                     .init(
                         operation: .equal,
-                        text: oldLines[i - 1]
+                        text: oldLines[i - 1],
+                        oldLine: i,
+                        newLine: j
                     )
                 )
                 i -= 1
@@ -40,7 +42,8 @@ public enum TextDiffer {
                 reversed.append(
                     .init(
                         operation: .insert,
-                        text: newLines[j - 1]
+                        text: newLines[j - 1],
+                        newLine: j
                     )
                 )
                 j -= 1
@@ -51,7 +54,8 @@ public enum TextDiffer {
                 reversed.append(
                     .init(
                         operation: .delete,
-                        text: oldLines[i - 1]
+                        text: oldLines[i - 1],
+                        oldLine: i
                     )
                 )
                 i -= 1
