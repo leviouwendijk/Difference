@@ -1,3 +1,5 @@
+import ExcerptPresentation
+
 public struct DifferenceRenderPlan: Sendable, Hashable {
     public struct Segment: Sendable, Hashable {
         public let component: DifferenceLineRenderComponent
@@ -250,36 +252,38 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
     private static func lineNumberWidth(
         in layout: DifferenceLayout
     ) -> Int {
-        layout.lines
-            .flatMap {
+        LinePresentation.Gutter.numberWidth(
+            values: layout.lines.flatMap { line in
                 [
-                    $0.oldLine,
-                    $0.newLine,
+                    line.oldLine,
+                    line.newLine,
                 ]
             }
-            .compactMap {
-                $0
-            }
-            .map {
-                String(
-                    $0
-                ).count
-            }
-            .max()
-            ?? 0
+        )
     }
 
     private static func lineNumberGutterWidth(
         columnWidth: Int,
         format: DifferenceLineNumberFormat
     ) -> Int {
-        switch format {
-        case .compact:
-            return columnWidth * 2 + 1
-
-        case .columns:
-            return columnWidth * 2 + 2
-        }
+        LinePresentation.Gutter(
+            columns: [
+                .init(
+                    text: "",
+                    width: columnWidth,
+                    alignment: .trailing
+                ),
+                .init(
+                    text: "",
+                    width: columnWidth,
+                    alignment: .trailing
+                ),
+            ],
+            separator: gutterSeparator(
+                for: format
+            )
+        )
+        .width
     }
 
     private static func lineNumbers(
@@ -288,48 +292,35 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
         format: DifferenceLineNumberFormat,
         missingCharacter: Character
     ) -> String {
-        let old = lineNumber(
-            line.oldLine,
-            width: width,
-            missingCharacter: missingCharacter
+        LinePresentation.Gutter(
+            columns: [
+                .number(
+                    line.oldLine,
+                    width: width,
+                    missingCharacter: missingCharacter
+                ),
+                .number(
+                    line.newLine,
+                    width: width,
+                    missingCharacter: missingCharacter
+                ),
+            ],
+            separator: gutterSeparator(
+                for: format
+            )
         )
-        let new = lineNumber(
-            line.newLine,
-            width: width,
-            missingCharacter: missingCharacter
-        )
-
-        switch format {
-        case .compact:
-            return old + ":" + new
-
-        case .columns:
-            return old + "  " + new
-        }
+        .text
     }
 
-    private static func lineNumber(
-        _ value: Int?,
-        width: Int,
-        missingCharacter: Character
+    private static func gutterSeparator(
+        for format: DifferenceLineNumberFormat
     ) -> String {
-        guard let value else {
-            return String(
-                repeating: missingCharacter,
-                count: width
-            )
+        switch format {
+        case .compact:
+            return ":"
+
+        case .columns:
+            return "  "
         }
-
-        let rendered = String(
-            value
-        )
-
-        return String(
-            repeating: " ",
-            count: max(
-                0,
-                width - rendered.count
-            )
-        ) + rendered
     }
 }

@@ -1,0 +1,24 @@
+{
+  "originHash" : "0fd376679044e16b1eb467de14451f903483523f6c07d19326a48547e3e45205",
+  "pins" : [
+    {
+      "identity" : "excerpt",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leviouwendijk/Excerpt.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "e7a0a0699e9cf01d0b58085f0a99fac42b400ba2"
+      }
+    },
+    {
+      "identity" : "position",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leviouwendijk/Position.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "23c0ec4218a64853830a9448a97b756731e0afab"
+      }
+    }
+  ],
+  "version" : 3
+}

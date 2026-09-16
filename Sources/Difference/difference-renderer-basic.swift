@@ -1,3 +1,5 @@
+import ExcerptPresentation
+
 extension DifferenceRenderer {
     public enum Basic {
         public static func render(
@@ -37,22 +39,20 @@ extension DifferenceRenderer {
         public static func render(
             _ plan: DifferenceRenderPlan
         ) -> String {
-            plan.lines
-                .map {
-                    let spacing = String(
-                        repeating: " ",
-                        count: $0.componentSpacing
-                    )
-
-                    return $0.segments
-                        .map(\.text)
-                        .joined(
-                            separator: spacing
+            let rows = plan.lines.map { line in
+                LinePresentation.Row(
+                    segments: line.segments.map { segment in
+                        .init(
+                            text: segment.text
                         )
-                }
-                .joined(
-                    separator: "\n"
+                    },
+                    componentSpacing: line.componentSpacing
                 )
+            }
+
+            return LinePresentation.Basic.render(
+                rows
+            )
         }
 
         public static func plain(

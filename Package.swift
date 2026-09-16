@@ -1,5 +1,4 @@
 // swift-tools-version: 6.2
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
@@ -8,30 +7,32 @@ let package = Package(
     products: [
         .library(
             name: "Difference",
-            targets: ["Difference"]
+            targets: [
+                "Difference",
+            ]
         ),
-        // .library(
-        //     name: "DifferenceTerminal",
-        //     targets: ["DifferenceTerminal"]
-        // ),
     ],
-    // dependencies: [
-    //     .package(url: "https://github.com/leviouwendijk/ANSI", branch: "master"),
-    // ],
+    dependencies: [
+        .package(
+            url: "https://github.com/leviouwendijk/Excerpt.git",
+            branch: "master"
+        ),
+    ],
     targets: [
         .target(
-            name: "Difference"
+            name: "Difference",
+            dependencies: [
+                .product(
+                    name: "ExcerptPresentation",
+                    package: "Excerpt"
+                ),
+            ]
         ),
-        // .target(
-        //     name: "DifferenceTerminal",
-        //     dependencies: [
-        //         "Difference",
-        //         .product(name: "ANSI", package: "ANSI"),
-        //     ]
-        // ),
-        // .testTarget(
-        //     name: "DifferenceTests",
-        //     dependencies: ["Difference"]
-        // ),
+        .executableTarget(
+            name: "DifferenceTests",
+            dependencies: [
+                "Difference",
+            ]
+        ),
     ]
 )
