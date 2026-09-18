@@ -79,8 +79,9 @@ func differenceLineNumberGuttersRemainCompatible() throws {
             .init(
                 role: .insert,
                 text: "value",
-                oldLine: nil,
-                newLine: 12
+                coordinate: .init(
+                    new: 12
+                )
             ),
         ]
     )
@@ -121,8 +122,9 @@ func differenceRenderComponentsRemainSelectable() throws {
             .init(
                 role: .insert,
                 text: "value",
-                oldLine: nil,
-                newLine: 1
+                coordinate: .init(
+                    new: 1
+                )
             ),
         ]
     )
@@ -196,8 +198,218 @@ func differencePresetsRemainAvailable() throws {
     )
 }
 
+func differenceLayoutExposesChanges() throws {
+    let layout = DifferenceLayout(
+        lines: [
+            .init(
+                role: .headerOld,
+                text: "old"
+            ),
+            .init(
+                role: .headerNew,
+                text: "new"
+            ),
+            .init(
+                role: .equal,
+                text: "unchanged",
+                coordinate: .init(
+                    old: 1,
+                    new: 1
+                )
+            ),
+            .init(
+                role: .delete,
+                text: "old value",
+                coordinate: .init(
+                    old: 2
+                )
+            ),
+            .init(
+                role: .insert,
+                text: "new value",
+                coordinate: .init(
+                    new: 2
+                )
+            ),
+            .init(
+                role: .insert,
+                text: "another value",
+                coordinate: .init(
+                    new: 3
+                )
+            ),
+            .init(
+                role: .separator,
+                text: " ..."
+            ),
+            .init(
+                role: .endOfFile,
+                text: "EOF"
+            ),
+        ]
+    )
+
+    try expect(
+        layout.changes.count == 3,
+        "changes contains only inserted and deleted lines"
+    )
+    try expect(
+        layout.changes.lines.map(\.role) == [
+            .delete,
+            .insert,
+            .insert,
+        ],
+        "changes preserves changed-line ordering"
+    )
+    try expect(
+        layout.changes.coordinates == [
+            .init(
+                old: 2
+            ),
+            .init(
+                new: 2
+            ),
+            .init(
+                new: 3
+            ),
+        ],
+        "changes exposes changed-line coordinates"
+    )
+
+    try expect(
+        layout.changes.insertions.count == 2,
+        "insertions reports inserted-line count"
+    )
+    try expect(
+        layout.changes.insertions.lines.map(\.text) == [
+            "new value",
+            "another value",
+        ],
+        "insertions exposes inserted lines"
+    )
+    try expect(
+        layout.changes.insertions.coordinates == [
+            .init(
+                new: 2
+            ),
+            .init(
+                new: 3
+            ),
+        ],
+        "insertions exposes new-side coordinates"
+    )
+    try expect(
+        !layout.changes.insertions.isEmpty,
+        "insertions reports itself as non-empty"
+    )
+
+    try expect(
+        layout.changes.deletions.count == 1,
+        "deletions reports deleted-line count"
+    )
+    try expect(
+        layout.changes.deletions.lines.map(\.text) == [
+            "old value",
+        ],
+        "deletions exposes deleted lines"
+    )
+    try expect(
+        layout.changes.deletions.coordinates == [
+            .init(
+                old: 2
+            ),
+        ],
+        "deletions exposes old-side coordinates"
+    )
+    try expect(
+        !layout.changes.deletions.isEmpty,
+        "deletions reports itself as non-empty"
+    )
+
+    try expect(
+        layout.hasChanges,
+        "layout reports when changes are present"
+    )
+    try expect(
+        !layout.changes.isEmpty,
+        "changes reports itself as non-empty"
+    )
+    try expect(
+        !layout.isEmpty,
+        "layout containing lines is not empty"
+    )
+}
+
+func emptyDifferenceLayoutExposesNoChanges() throws {
+    let layout = DifferenceLayout(
+        lines: []
+    )
+
+    try expect(
+        layout.changes.count == 0,
+        "empty layout has no changes"
+    )
+    try expect(
+        layout.changes.lines.isEmpty,
+        "empty layout exposes no changed lines"
+    )
+    try expect(
+        layout.changes.coordinates.isEmpty,
+        "empty layout exposes no changed coordinates"
+    )
+
+    try expect(
+        layout.changes.insertions.count == 0,
+        "empty layout has no insertions"
+    )
+    try expect(
+        layout.changes.insertions.lines.isEmpty,
+        "empty layout exposes no inserted lines"
+    )
+    try expect(
+        layout.changes.insertions.coordinates.isEmpty,
+        "empty layout exposes no insertion coordinates"
+    )
+    try expect(
+        layout.changes.insertions.isEmpty,
+        "empty insertion selection reports itself as empty"
+    )
+
+    try expect(
+        layout.changes.deletions.count == 0,
+        "empty layout has no deletions"
+    )
+    try expect(
+        layout.changes.deletions.lines.isEmpty,
+        "empty layout exposes no deleted lines"
+    )
+    try expect(
+        layout.changes.deletions.coordinates.isEmpty,
+        "empty layout exposes no deletion coordinates"
+    )
+    try expect(
+        layout.changes.deletions.isEmpty,
+        "empty deletion selection reports itself as empty"
+    )
+
+    try expect(
+        !layout.hasChanges,
+        "empty layout reports no changes"
+    )
+    try expect(
+        layout.changes.isEmpty,
+        "empty changes view reports itself as empty"
+    )
+    try expect(
+        layout.isEmpty,
+        "empty layout reports itself as empty"
+    )
+}
+
 try basicRendererPreservesLegacyPlanRendering()
 try differenceLineNumberGuttersRemainCompatible()
 try differenceRenderComponentsRemainSelectable()
 try differencePresetsRemainAvailable()
+try differenceLayoutExposesChanges()
+try emptyDifferenceLayoutExposesNoChanges()
 print("DifferenceTests: passed")
