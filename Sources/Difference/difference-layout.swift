@@ -1,3 +1,5 @@
+import Schema
+
 public struct DifferenceLayout: Sendable, Codable, Hashable {
     public struct Line: Sendable, Codable, Hashable {
         public struct Coordinate:
@@ -218,5 +220,73 @@ extension DifferenceLayout.Line {
     )
     public var newLine: Int? {
         coordinate.new
+    }
+}
+
+extension DifferenceLayout: JSONSchemaProviding {
+    public static var jsonschema: JSONSchema {
+        .object(
+            properties: [
+                .init(
+                    name: "lines",
+                    schema: [Line].jsonschema,
+                    required: true
+                ),
+            ],
+            additionalProperties: .disallowed
+        )
+    }
+}
+
+extension DifferenceLayout.Line: JSONSchemaProviding {
+    public static var jsonschema: JSONSchema {
+        .object(
+            properties: [
+                .init(
+                    name: "role",
+                    schema: DifferenceLayout.Role.jsonschema,
+                    required: true
+                ),
+                .init(
+                    name: "text",
+                    schema: String.jsonschema,
+                    required: true
+                ),
+                .init(
+                    name: "coordinate",
+                    schema: Coordinate.jsonschema,
+                    required: true
+                ),
+            ],
+            additionalProperties: .disallowed
+        )
+    }
+}
+
+extension DifferenceLayout.Line.Coordinate: JSONSchemaProviding {
+    public static var jsonschema: JSONSchema {
+        .object(
+            properties: [
+                .init(
+                    name: "old",
+                    schema: Int.jsonschema,
+                    required: false
+                ),
+                .init(
+                    name: "new",
+                    schema: Int.jsonschema,
+                    required: false
+                ),
+            ],
+            additionalProperties: .disallowed
+        )
+    }
+}
+
+extension DifferenceLayout.Role: JSONSchemaProviding {
+    public static var jsonschema: JSONSchema {
+        .string(
+            cases: allCases.map(\.rawValue)
+        )
     }
 }
