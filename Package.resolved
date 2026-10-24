@@ -1,5 +1,5 @@
 {
-  "originHash" : "9ccbbd99f591757fef67ce714c6e8476af6026208145bc1598574e3fb9b308a5",
+  "originHash" : "7416e2d743014707744d878476290eb5f86db4cef8eda6133b468c80a93eba3c",
   "pins" : [
     {
       "identity" : "atomos",
@@ -25,7 +25,7 @@
       "location" : "https://github.com/leviouwendijk/Position.git",
       "state" : {
         "branch" : "master",
-        "revision" : "491376735af3ef7417b989e38c508577fb72637a"
+        "revision" : "f4b2a54d00898e52111ac452b851cb00cf9538aa"
       }
     },
     {
@@ -34,7 +34,7 @@
       "location" : "https://github.com/leviouwendijk/Primitives.git",
       "state" : {
         "branch" : "master",
-        "revision" : "43d0c47686146a260187a32ba3fa3c920770ebcd"
+        "revision" : "74458da6a6262002ea7b006f37844ec7a5aa04f5"
       }
     },
     {
@@ -43,7 +43,7 @@
       "location" : "https://github.com/leviouwendijk/Schema.git",
       "state" : {
         "branch" : "master",
-        "revision" : "6b8f45a73ab92ce083c4848bb520db6d99866a06"
+        "revision" : "b880c7b0854d636fd0e14e6d5d19c6de5d1a5c59"
       }
     },
     {

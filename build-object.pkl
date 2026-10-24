@@ -1,0 +1,20 @@
+uuid = "2B16FD0A-08B6-4232-9979-7CC646DD9C43"
+name = "Difference"
+types { "library" }
+versions {
+    release {
+        major = 0
+        minor = 1
+        patch = 0
+    }
+}
+compile {
+    use = false
+    arguments { }
+}
+tests {
+    primary = "t_diff"
+}
+details = ""
+author = "levi"
+update = "https://raw.githubusercontent.com/leviouwendijk/Difference/master/build-object.pkl"
