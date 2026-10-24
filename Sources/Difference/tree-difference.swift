@@ -76,7 +76,9 @@ public enum TreeDiffer {
         source: TreeDifferenceSource = .observed,
         identity: (Value) -> String,
         label: (Value) -> String,
-        equivalent: (Value, Value) -> Bool
+        equivalent: (Value, Value) -> Bool,
+        /// Optional stable-identity relocation check (e.g. same file renamed).
+        relocated: ((Value, Value) -> Bool)? = nil
     ) throws -> TreeDifference<Value> {
         let old_index = try index(before, identity: identity)
         let new_index = try index(after, identity: identity)
@@ -84,7 +86,14 @@ public enum TreeDiffer {
         func make_node(_ id: String) throws -> Tree<TreeDifference<Value>.Entry>.Node {
             let old = old_index.by_id[id]
             let new = new_index.by_id[id]
-            let moved = old != nil && new != nil && old?.parent_id != new?.parent_id
+            let move_by_value: Bool
+            if let old, let new {
+                move_by_value = relocated?(old.value, new.value) ?? false
+            } else {
+                move_by_value = false
+            }
+            let moved = (old != nil && new != nil && old?.parent_id != new?.parent_id)
+                || move_by_value
             let modified: Bool
                 if let old, let new {
                     modified = !equivalent(old.value, new.value)

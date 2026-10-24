@@ -1,7 +1,7 @@
 import Primitives
 
-public struct TreeDifferenceLayout: Sendable, Hashable {
-    public struct Line: Sendable, Hashable {
+public struct TreeDifferenceLayout: Sendable, Codable, Hashable {
+    public struct Line: Sendable, Codable, Hashable {
         public let depth: Int
         public let is_last_child: Bool
         public let ancestor_last: [Bool]
