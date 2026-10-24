@@ -62,7 +62,20 @@ public struct Difference<Value> {
         self.contents = contents
     }
 
-    public var tree_layout: TreeDifferenceLayout {
+    /// Derived presentation forms. Neither view is stored as semantic truth.
+    public struct Layout: Sendable, Codable, Hashable {
+        public let text: DifferenceLayout
+        public let tree: TreeDifferenceLayout
+    }
+
+    public var layout: Layout {
+        .init(
+            text: make_text_layout(),
+            tree: make_tree_layout()
+        )
+    }
+
+    public func make_tree_layout() -> TreeDifferenceLayout {
         // A content-only edit changes the file even when its path is unchanged.
         let modified_ids = Set(contents.filter {
             $0.difference.hasChanges
@@ -100,10 +113,6 @@ public struct Difference<Value> {
                 layout: .make(content.difference, options: options)
             )
         }
-    }
-
-    public var text_layout: DifferenceLayout {
-        make_text_layout()
     }
 
     public func make_text_layout(

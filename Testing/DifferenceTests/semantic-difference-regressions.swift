@@ -32,13 +32,25 @@ func semantic_difference_regressions() throws {
         contents: [.init(id: "op-A", node_id: "file", difference: text)]
     )
     try expect(document.structure.source == .planned, "provenance survives")
-    try expect(document.tree_layout.lines.map(\.id) == ["folder", "file"], "tree identities survive")
+    let layout = document.layout
+    try expect(layout.tree.lines.map(\.id) == ["folder", "file"], "tree identities survive")
     try expect(
-        document.tree_layout.lines.first(where: { $0.id == "file" })?.change == .modified,
+        layout.tree.lines.first(where: { $0.id == "file" })?.change == .modified,
         "content-only changes appear as modified in the tree view"
     )
     try expect(document.text_sections().map(\.node_id) == ["file"], "text sections retain identity")
-    try expect(document.text_layout.changes.count == 2, "text projection retains changed lines")
+    try expect(layout.text.changes.count == 2, "text projection retains changed lines")
+    try expect(layout.text == document.make_text_layout(), "default text projection matches helper")
+    try expect(layout.tree == document.make_tree_layout(), "default tree projection matches helper")
+    try expect(
+        document.make_text_layout(options: .full)
+            == DifferenceLayout.make(text, options: .full),
+        "configurable text projection retained"
+    )
+    let layout_roundtrip = try JSONDecoder().decode(
+        Difference<DocumentNode>.Layout.self, from: JSONEncoder().encode(layout)
+    )
+    try expect(layout_roundtrip == layout, "derived layout is codable")
     let roundtrip = try JSONDecoder().decode(
         Difference<DocumentNode>.self, from: JSONEncoder().encode(document)
     )
