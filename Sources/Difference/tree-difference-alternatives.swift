@@ -85,11 +85,15 @@ public struct TreeDifferenceAlternativesLayout<Value> {
         let entries: [String: NodeState]
     }
 
+    /// Compare original values with caller-defined equivalence; candidate values
+    /// and candidate-specific after topology are intentionally not compared.
     public static func make(
-        _ alternatives: DifferenceAlternatives<TreeDifference<Value>>
+        _ alternatives: DifferenceAlternatives<TreeDifference<Value>>,
+        baseline_equivalent: (Value, Value) -> Bool
     ) throws -> Self {
         let indices = alternatives.candidates.map { make_index($0.difference) }
         var original_addresses: [String: TreeAddress] = [:]
+        var original_values: [String: Value] = [:]
         var labels: [String: String] = [:]
         var additional_ids: [String] = []
         var seen = Set<String>()
@@ -98,11 +102,19 @@ public struct TreeDifferenceAlternativesLayout<Value> {
             for id in index.order {
                 guard let state = index.entries[id] else { continue }
                 if let before_address = state.entry.before_address {
+                    guard let before_value = state.entry.before else {
+                        throw DifferenceAlternativesError.inconsistent_baseline(id)
+                    }
                     if let earlier = original_addresses[id], earlier != before_address {
                         throw DifferenceAlternativesError.inconsistent_baseline(id)
                     }
+                    if let earlier = original_values[id],
+                       !baseline_equivalent(earlier, before_value) {
+                        throw DifferenceAlternativesError.inconsistent_baseline(id)
+                    }
                     original_addresses[id] = before_address
-                } else if original_addresses[id] != nil {
+                    original_values[id] = before_value
+                } else if original_addresses[id] != nil || state.entry.before != nil {
                     throw DifferenceAlternativesError.inconsistent_baseline(id)
                 }
                 if labels[id] == nil { labels[id] = state.entry.label }
@@ -185,6 +197,15 @@ public struct TreeDifferenceAlternativesLayout<Value> {
             )
         }
         return .init(order: order, entries: states)
+    }
+}
+
+extension TreeDifferenceAlternativesLayout where Value: Equatable {
+    /// Backward-compatible convenience for Equatable node payloads.
+    public static func make(
+        _ alternatives: DifferenceAlternatives<TreeDifference<Value>>
+    ) throws -> Self {
+        try make(alternatives, baseline_equivalent: ==)
     }
 }
 
