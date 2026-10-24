@@ -11,8 +11,19 @@ let package = Package(
                 "Difference",
             ]
         ),
+
+        .executable(
+            name: "t_diff",
+            targets: [
+                "DifferenceTests",
+            ]
+        ),
     ],
     dependencies: [
+        .package(
+            url: "https://github.com/leviouwendijk/Primitives.git",
+            branch: "master"
+        ),
         .package(
             url: "https://github.com/leviouwendijk/Excerpt.git",
             branch: "master"
@@ -26,6 +37,7 @@ let package = Package(
         .target(
             name: "Difference",
             dependencies: [
+                .product(name: "Primitives", package: "Primitives"),
                 .product(
                     name: "ExcerptPresentation",
                     package: "Excerpt"
@@ -36,11 +48,14 @@ let package = Package(
                 ),
             ]
         ),
+
         .executableTarget(
             name: "DifferenceTests",
             dependencies: [
                 "Difference",
-            ]
+                .product(name: "Primitives", package: "Primitives"),
+            ],
+            path: "Testing/DifferenceTests"
         ),
     ]
 )
