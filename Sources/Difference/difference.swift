@@ -76,11 +76,20 @@ public struct Difference<Value> {
     }
 
     public func make_tree_layout() -> TreeDifferenceLayout {
+        make_tree_layout(presenting: { .init(label: $0.label) })
+    }
+
+    public func make_tree_layout(
+        presenting: (TreeDifference<Value>.Entry) throws -> TreeDifferenceLayout.Line.Presentation
+    ) rethrows -> TreeDifferenceLayout {
         // A content-only edit changes the file even when its path is unchanged.
         let modified_ids = Set(contents.filter {
             $0.difference.hasChanges
         }.map(\.node_id))
-        let structural = TreeDifferenceLayout.make(structure)
+        let structural = try TreeDifferenceLayout.make(
+            structure,
+            presenting: presenting
+        )
         return .init(lines: structural.lines.map { line in
             let change: TreeChangeKind
             if modified_ids.contains(line.id) {
@@ -98,7 +107,8 @@ public struct Difference<Value> {
                 ancestor_last: line.ancestor_last,
                 change: change,
                 label: line.label,
-                id: line.id
+                id: line.id,
+                relocation: line.relocation
             )
         })
     }

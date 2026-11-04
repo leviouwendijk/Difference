@@ -2,12 +2,34 @@ import Primitives
 
 public struct TreeDifferenceLayout: Sendable, Codable, Hashable {
     public struct Line: Sendable, Codable, Hashable {
+        /// Display-only descriptions; semantic positions remain in TreeDifference.Entry.
+        public struct Relocation: Sendable, Codable, Hashable {
+            public let from: String
+            public let to: String
+
+            public init(from: String, to: String) {
+                self.from = from
+                self.to = to
+            }
+        }
+
+        public struct Presentation: Sendable, Codable, Hashable {
+            public let label: String
+            public let relocation: Relocation?
+
+            public init(label: String, relocation: Relocation? = nil) {
+                self.label = label
+                self.relocation = relocation
+            }
+        }
+
         public let depth: Int
         public let is_last_child: Bool
         public let ancestor_last: [Bool]
         public let change: TreeChangeKind
         public let label: String
         public let id: String
+        public let relocation: Relocation?
 
         public init(
             depth: Int,
@@ -15,7 +37,8 @@ public struct TreeDifferenceLayout: Sendable, Codable, Hashable {
             ancestor_last: [Bool],
             change: TreeChangeKind,
             label: String,
-            id: String
+            id: String,
+            relocation: Relocation? = nil
         ) {
             self.depth = depth
             self.is_last_child = is_last_child
@@ -23,6 +46,7 @@ public struct TreeDifferenceLayout: Sendable, Codable, Hashable {
             self.change = change
             self.label = label
             self.id = id
+            self.relocation = relocation
         }
     }
 
@@ -33,25 +57,37 @@ public struct TreeDifferenceLayout: Sendable, Codable, Hashable {
     }
 
     public static func make<Value>(_ difference: TreeDifference<Value>) -> Self {
+        make(difference, presenting: { .init(label: $0.label) })
+    }
+
+    public static func make<Value>(
+        _ difference: TreeDifference<Value>,
+        presenting: (TreeDifference<Value>.Entry) throws -> Line.Presentation
+    ) rethrows -> Self {
         var lines: [Line] = []
         func visit(
             _ siblings: [Tree<TreeDifference<Value>.Entry>.Node],
             ancestors: [Bool]
-        ) {
+        ) throws {
             for (index, node) in siblings.enumerated() {
                 let last = index == siblings.count - 1
+                let presentation = try presenting(node.value)
                 lines.append(.init(
                     depth: ancestors.count,
                     is_last_child: last,
                     ancestor_last: ancestors,
                     change: node.value.change,
-                    label: node.value.label,
-                    id: node.value.id
+                    label: presentation.label,
+                    id: node.value.id,
+                    relocation: (node.value.change == .moved
+                        || node.value.change == .moved_modified)
+                        ? presentation.relocation
+                        : nil
                 ))
-                visit(node.children, ancestors: ancestors + [last])
+                try visit(node.children, ancestors: ancestors + [last])
             }
         }
-        visit(difference.tree.roots, ancestors: [])
+        try visit(difference.tree.roots, ancestors: [])
         return .init(lines: lines)
     }
 }
@@ -62,6 +98,9 @@ public struct TreeDifferenceRenderPlan: Sendable, Hashable {
             case marker
             case branch
             case label
+            case relocation_from
+            case relocation_separator
+            case relocation_to
         }
         public let component: Component
         public let text: String
@@ -88,15 +127,20 @@ public struct TreeDifferenceRenderPlan: Sendable, Hashable {
             case .moved: marker = ">"
             case .moved_modified: marker = "*"
             }
-            return .init(
-                change: line.change,
-                id: line.id,
-                segments: [
-                    .init(component: .marker, text: marker),
-                    .init(component: .branch, text: branch),
-                    .init(component: .label, text: line.label)
-                ]
-            )
+            var segments: [Segment] = [
+                .init(component: .marker, text: marker),
+                .init(component: .branch, text: branch),
+            ]
+            if let relocation = line.relocation {
+                segments.append(contentsOf: [
+                    .init(component: .relocation_from, text: relocation.from),
+                    .init(component: .relocation_separator, text: " -> "),
+                    .init(component: .relocation_to, text: relocation.to),
+                ])
+            } else {
+                segments.append(.init(component: .label, text: line.label))
+            }
+            return .init(change: line.change, id: line.id, segments: segments)
         })
     }
 }
@@ -104,10 +148,10 @@ public struct TreeDifferenceRenderPlan: Sendable, Hashable {
 public enum TreeDifferenceRenderer {
     public static func render(_ plan: TreeDifferenceRenderPlan) -> String {
         plan.lines.map { line in
-            guard line.segments.count == 3 else {
+            guard line.segments.count >= 3 else {
                 return line.segments.map(\.text).joined()
             }
-            return "\(line.segments[0].text) \(line.segments[1].text)\(line.segments[2].text)"
+            return "\(line.segments[0].text) \(line.segments.dropFirst().map(\.text).joined())"
         }.joined(separator: "\n")
     }
 

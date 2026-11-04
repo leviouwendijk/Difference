@@ -19,6 +19,18 @@ extension TreeDifferenceLayout: JSONSchemaProviding {
     }
 }
 
+extension TreeDifferenceLayout.Line.Relocation: JSONSchemaProviding {
+    public static var jsonschema: JSONSchema {
+        .object(
+            properties: [
+                .init(name: "from", schema: String.jsonschema, required: true),
+                .init(name: "to", schema: String.jsonschema, required: true),
+            ],
+            additionalProperties: .disallowed
+        )
+    }
+}
+
 extension TreeDifferenceLayout.Line: JSONSchemaProviding {
     public static var jsonschema: JSONSchema {
         .object(
@@ -29,6 +41,7 @@ extension TreeDifferenceLayout.Line: JSONSchemaProviding {
                 .init(name: "change", schema: TreeChangeKind.jsonschema, required: true),
                 .init(name: "label", schema: String.jsonschema, required: true),
                 .init(name: "id", schema: String.jsonschema, required: true),
+                .init(name: "relocation", schema: TreeDifferenceLayout.Line.Relocation.jsonschema, required: false),
             ],
             additionalProperties: .disallowed
         )
