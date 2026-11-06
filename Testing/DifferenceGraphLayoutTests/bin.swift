@@ -111,6 +111,76 @@ struct DifferenceGraphLayoutTests {
             throw FixtureError.assertion("dangling endpoint must throw")
         } catch GraphDifferenceLayoutError.unknown_endpoint(edge: "invalid", node: "missing") {}
 
-        print("PASS GraphDifferenceLayout presentation, identities, endpoints, ordering, Codable")
+        let textLayout = DifferenceLayout(lines: [
+            .init(role: .insert, text: "new line"),
+            .init(role: .delete, text: "old line"),
+        ])
+        let treeLayout = TreeDifferenceLayout(lines: [
+            .init(
+                depth: 0,
+                is_last_child: true,
+                ancestor_last: [],
+                change: .modified,
+                label: "Root",
+                id: "root"
+            ),
+        ])
+
+        let presentation = DifferencePresentation(
+            text: textLayout,
+            tree: treeLayout,
+            graph: layout
+        )
+        let summary = presentation.summary
+
+        try check(!presentation.isEmpty, "aggregate is not empty")
+        try check(presentation.has_changes, "aggregate reports changes")
+        try check(summary.text?.insertions == 1, "text insertion count")
+        try check(summary.text?.deletions == 1, "text deletion count")
+        try check(summary.tree?.total == 1, "tree total")
+        try check(summary.tree?.changed == 1, "tree changed count")
+        try check(summary.graph?.nodes.total == 4, "graph node total")
+        try check(summary.graph?.nodes.changed == 3, "graph changed nodes")
+        try check(summary.graph?.edges.total == 3, "graph edge total")
+        try check(summary.graph?.edges.changed == 3, "graph changed edges")
+        try check(summary.has_changes, "typed summary changes")
+        try check(
+            presentation.changeSummary == "1 insertions, 1 deletions; tree: 1 changed of 1 nodes; graph: 3 changed of 4 nodes, 3 changed of 3 edges",
+            "aggregate summary rendering"
+        )
+
+        let textOnly = DifferencePresentation(text: textLayout)
+        try check(textOnly.changeSummary == "1 insertions, 1 deletions", "legacy text summary")
+        try check(textOnly.has_changes, "text-only changes")
+
+        let graphOnly = DifferencePresentation(graph: layout)
+        try check(!graphOnly.isEmpty, "graph-only presentation")
+        try check(graphOnly.has_changes, "graph-only changes")
+        try check(
+            graphOnly.changeSummary == "graph: 3 changed of 4 nodes, 3 changed of 3 edges",
+            "graph-only summary"
+        )
+
+        let emptyPresentation = DifferencePresentation()
+        try check(emptyPresentation.isEmpty, "empty aggregate")
+        try check(!emptyPresentation.has_changes, "empty aggregate has no changes")
+        try check(emptyPresentation.changeSummary == "no differences", "empty summary")
+
+        let unchangedPresentation = DifferencePresentation(
+            graph: try project(unchanged)
+        )
+        try check(!unchangedPresentation.isEmpty, "unchanged graph remains present")
+        try check(!unchangedPresentation.has_changes, "unchanged graph reports no changes")
+        try check(unchangedPresentation.summary.graph?.nodes.changed == 0, "unchanged node count")
+        try check(unchangedPresentation.summary.graph?.edges.changed == 0, "unchanged edge count")
+
+        let restoredPresentation = try JSONDecoder().decode(
+            DifferencePresentation.self,
+            from: JSONEncoder().encode(presentation)
+        )
+        try check(restoredPresentation == presentation, "aggregate Codable roundtrip")
+        try check(restoredPresentation.summary == summary, "summary survives projection roundtrip")
+
+        print("PASS GraphDifferenceLayout and DifferencePresentation")
     }
 }
