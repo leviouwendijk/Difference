@@ -27,7 +27,8 @@ extension TreeDiffer {
         candidates: [TreeAlternative<Value>],
         identity: (Value) -> String,
         label: (Value) -> String,
-        equivalent: (Value, Value) -> Bool
+        equivalent: (Value, Value) -> Bool,
+        sibling_order: TreeSiblingOrderPolicy = .ignored
     ) throws -> DifferenceAlternatives<TreeDifference<Value>> {
         let differences = try candidates.map { candidate in
             DifferenceAlternatives<TreeDifference<Value>>.Candidate(
@@ -39,7 +40,8 @@ extension TreeDiffer {
                     source: candidate.source,
                     identity: identity,
                     label: label,
-                    equivalent: equivalent
+                    equivalent: equivalent,
+                    sibling_order: sibling_order
                 )
             )
         }
@@ -62,6 +64,7 @@ public struct TreeDifferenceAlternativesLayout<Value> {
         public let after_address: TreeAddress?
         public let before_parent_id: String?
         public let after_parent_id: String?
+        public let movement_reasons: [TreeMovementReason]?
     }
 
     public struct Line {
@@ -153,7 +156,8 @@ public struct TreeDifferenceAlternativesLayout<Value> {
                     before_address: node?.entry.before_address,
                     after_address: node?.entry.after_address,
                     before_parent_id: node?.before_parent_id,
-                    after_parent_id: node?.after_parent_id
+                    after_parent_id: node?.after_parent_id,
+                    movement_reasons: node?.entry.movement_reasons
                 )
             }
             return Line(
@@ -235,7 +239,19 @@ public enum TreeDifferenceAlternativesRenderer {
             for state in line.candidates {
                 guard let change = state.change, change != .unchanged else { continue }
                 if change == .moved || change == .moved_modified {
-                    rendered.append("\(indentation)  \(state.id): parent \(state.before_parent_id ?? "<root>") -> \(state.after_parent_id ?? "<root>")")
+                    let reasons = state.movement_reasons ?? []
+                    if reasons.contains(.reparented) {
+                        rendered.append("\(indentation)  \(state.id): parent \(state.before_parent_id ?? "<root>") -> \(state.after_parent_id ?? "<root>")")
+                    }
+                    if reasons.contains(.reordered) {
+                        rendered.append("\(indentation)  \(state.id): reordered under \(state.after_parent_id ?? "<root>")")
+                    }
+                    if reasons.contains(.relocated) {
+                        rendered.append("\(indentation)  \(state.id): relocated")
+                    }
+                    if reasons.isEmpty {
+                        rendered.append("\(indentation)  \(state.id): moved (reason unspecified)")
+                    }
                 } else if line.baseline_address == nil, let parent = state.after_parent_id {
                     rendered.append("\(indentation)  \(state.id): introduced under \(parent)")
                 }

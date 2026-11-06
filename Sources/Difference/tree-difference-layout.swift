@@ -30,6 +30,7 @@ public struct TreeDifferenceLayout: Sendable, Codable, Hashable {
         public let label: String
         public let id: String
         public let relocation: Relocation?
+        public let movement_reasons: [TreeMovementReason]?
 
         public init(
             depth: Int,
@@ -38,7 +39,8 @@ public struct TreeDifferenceLayout: Sendable, Codable, Hashable {
             change: TreeChangeKind,
             label: String,
             id: String,
-            relocation: Relocation? = nil
+            relocation: Relocation? = nil,
+            movement_reasons: [TreeMovementReason]? = nil
         ) {
             self.depth = depth
             self.is_last_child = is_last_child
@@ -47,6 +49,7 @@ public struct TreeDifferenceLayout: Sendable, Codable, Hashable {
             self.label = label
             self.id = id
             self.relocation = relocation
+            self.movement_reasons = movement_reasons
         }
     }
 
@@ -82,7 +85,8 @@ public struct TreeDifferenceLayout: Sendable, Codable, Hashable {
                     relocation: (node.value.change == .moved
                         || node.value.change == .moved_modified)
                         ? presentation.relocation
-                        : nil
+                        : nil,
+                    movement_reasons: node.value.movement_reasons
                 ))
                 try visit(node.children, ancestors: ancestors + [last])
             }

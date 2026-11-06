@@ -108,7 +108,8 @@ public struct Difference<Value> {
                 change: change,
                 label: line.label,
                 id: line.id,
-                relocation: line.relocation
+                relocation: line.relocation,
+                movement_reasons: line.movement_reasons
             )
         })
     }

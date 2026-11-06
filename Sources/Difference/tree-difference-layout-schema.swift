@@ -8,6 +8,12 @@ extension TreeChangeKind: JSONSchemaProviding {
     }
 }
 
+extension TreeMovementReason: JSONSchemaProviding {
+    public static var jsonschema: JSONSchema {
+        .string(cases: allCases.map(\.rawValue))
+    }
+}
+
 extension TreeDifferenceLayout: JSONSchemaProviding {
     public static var jsonschema: JSONSchema {
         .object(
@@ -42,6 +48,7 @@ extension TreeDifferenceLayout.Line: JSONSchemaProviding {
                 .init(name: "label", schema: String.jsonschema, required: true),
                 .init(name: "id", schema: String.jsonschema, required: true),
                 .init(name: "relocation", schema: TreeDifferenceLayout.Line.Relocation.jsonschema, required: false),
+                .init(name: "movement_reasons", schema: [TreeMovementReason].jsonschema, required: false),
             ],
             additionalProperties: .disallowed
         )
