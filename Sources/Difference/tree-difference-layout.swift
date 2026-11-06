@@ -105,6 +105,8 @@ public struct TreeDifferenceRenderPlan: Sendable, Hashable {
             case relocation_from
             case relocation_separator
             case relocation_to
+            case movement_delimiter
+            case movement_reason
         }
         public let component: Component
         public let text: String
@@ -118,7 +120,10 @@ public struct TreeDifferenceRenderPlan: Sendable, Hashable {
 
     public let lines: [Line]
 
-    public static func make(_ layout: TreeDifferenceLayout) -> Self {
+    public static func make(
+        _ layout: TreeDifferenceLayout,
+        show_movement_reasons: Bool = false
+    ) -> Self {
         .init(lines: layout.lines.map { line in
             let branch = line.ancestor_last.dropLast().map { $0 ? "    " : "│   " }.joined()
                 + (line.depth > 0 ? (line.is_last_child ? "└── " : "├── ") : "")
@@ -143,6 +148,17 @@ public struct TreeDifferenceRenderPlan: Sendable, Hashable {
                 ])
             } else {
                 segments.append(.init(component: .label, text: line.label))
+            }
+            if show_movement_reasons,
+               line.change == .moved || line.change == .moved_modified,
+               let reasons = line.movement_reasons,
+               !reasons.isEmpty {
+                segments.append(.init(component: .movement_delimiter, text: "  ["))
+                segments.append(.init(
+                    component: .movement_reason,
+                    text: reasons.map(\.rawValue).joined(separator: ", ")
+                ))
+                segments.append(.init(component: .movement_delimiter, text: "]"))
             }
             return .init(change: line.change, id: line.id, segments: segments)
         })
