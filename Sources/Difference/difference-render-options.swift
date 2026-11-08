@@ -3,6 +3,7 @@ public enum DifferenceLineRenderComponent:
     Hashable,
     CaseIterable
 {
+    case bar
     case lineNumbers
     case marker
     case border
@@ -34,6 +35,7 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
     public var insertMarker: String
     public var deleteMarker: String
     public var border: String
+    public var changeBar: String
 
     public init(
         showHeader: Bool = true,
@@ -53,7 +55,8 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
         equalMarker: String = " ",
         insertMarker: String = "+",
         deleteMarker: String = "-",
-        border: String = "│"
+        border: String = "│",
+        changeBar: String = "┃"
     ) {
         self.showHeader = showHeader
         self.showUnchangedLines = showUnchangedLines
@@ -73,6 +76,7 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
         self.insertMarker = insertMarker
         self.deleteMarker = deleteMarker
         self.border = border
+        self.changeBar = changeBar
     }
 
     public static let unified: Self = .init(

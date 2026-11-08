@@ -24,15 +24,18 @@ public struct DifferenceLayout: Sendable, Codable, Hashable {
         public let role: Role
         public let text: String
         public let coordinate: Coordinate
+        public let collapsedCount: Int?
 
         public init(
             role: Role,
             text: String,
-            coordinate: Coordinate = .none
+            coordinate: Coordinate = .none,
+            collapsedCount: Int? = nil
         ) {
             self.role = role
             self.text = text
             self.coordinate = coordinate
+            self.collapsedCount = collapsedCount
         }
     }
 

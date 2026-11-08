@@ -1,3 +1,4 @@
+import Foundation
 extension DifferenceLayout {
     public static func make(
         _ difference: TextDifference,
@@ -72,7 +73,10 @@ extension DifferenceLayout {
                 out.append(
                     .init(
                         role: .separator,
-                        text: options.collapseSeparator
+                        text: options.collapseSeparator.replacingOccurrences(
+                            of: "{count}", with: String(index - previousIndex - 1)
+                        ),
+                        collapsedCount: index - previousIndex - 1
                     )
                 )
             }
@@ -92,7 +96,10 @@ extension DifferenceLayout {
             out.append(
                 .init(
                     role: .separator,
-                    text: options.collapseSeparator
+                    text: options.collapseSeparator.replacingOccurrences(
+                        of: "{count}", with: String(lines.count - previousIndex - 1)
+                    ),
+                    collapsedCount: lines.count - previousIndex - 1
                 )
             )
         }

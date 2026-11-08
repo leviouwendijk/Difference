@@ -146,6 +146,12 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
         options: DifferenceRenderOptions
     ) -> Segment? {
         switch component {
+        case .bar:
+            return .init(
+                component: .bar,
+                text: line.role == .insert || line.role == .delete ? options.changeBar : " "
+            )
+
         case .lineNumbers:
             guard lineNumberWidth > 0 else {
                 return nil
@@ -220,7 +226,8 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
                     text: options.border
                 )
 
-            case .marker,
+            case .bar,
+                 .marker,
                  .text:
                 return nil
             }
