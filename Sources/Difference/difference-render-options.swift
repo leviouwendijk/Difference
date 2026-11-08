@@ -25,6 +25,7 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
     public var contextLineCount: Int
     public var collapseSeparator: String
     public var showEndOfFile: Bool
+    public var showHunkHeaders: Bool
 
     public var lineComponents: [DifferenceLineRenderComponent]
     public var lineNumberFormat: DifferenceLineNumberFormat
@@ -43,6 +44,7 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
         contextLineCount: Int = 3,
         collapseSeparator: String = " ...",
         showEndOfFile: Bool = false,
+        showHunkHeaders: Bool = false,
         lineComponents: [DifferenceLineRenderComponent] = [
             .lineNumbers,
             .border,
@@ -63,6 +65,7 @@ public struct DifferenceRenderOptions: Sendable, Hashable {
         self.contextLineCount = max(0, contextLineCount)
         self.collapseSeparator = collapseSeparator
         self.showEndOfFile = showEndOfFile
+        self.showHunkHeaders = showHunkHeaders
         self.lineComponents = Self.unique(
             lineComponents
         )
