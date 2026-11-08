@@ -145,8 +145,15 @@ public enum TextDiffer {
     ) throws -> (steps: [Step], coarse: Bool) {
         if old.isEmpty { return (new.indices.map { .insert($0) }, false) }
         if new.isEmpty { return (old.indices.map { .delete($0) }, false) }
-        let maximum = old.count + new.count
+        let (maximum, countOverflow) = old.count.addingReportingOverflow(new.count)
+        guard !countOverflow, maximum <= (Int.max - 3) / 2 else {
+            throw Failure.limit_exceeded
+        }
         let length = maximum * 2 + 3
+        if length > options.maxTraceCells {
+            if options.onLimit == .fail { throw Failure.limit_exceeded }
+            return (old.indices.map { .delete($0) } + new.indices.map { .insert($0) }, true)
+        }
         let offset = maximum + 1
         var previous = Array(repeating: -1, count: length)
         previous[offset + 1] = 0
