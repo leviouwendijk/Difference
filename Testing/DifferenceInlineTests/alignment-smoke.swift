@@ -77,6 +77,12 @@ enum DifferenceAlignmentSmoke {
             pairing: .aligned(minimum: 0.45, maxCells: 32), inline: .none
         ))
         precondition(bounded.pairs.count == 80, "oversized blocks must fall back without omissions")
+        do {
+            try DifferenceQualitySmoke.run()
+        } catch {
+            preconditionFailure("difference quality smoke failed: \(error)")
+        }
+        DifferencePerformanceSmoke.run()
         print("difference alignment smoke passed")
     }
 }
