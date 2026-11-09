@@ -45,6 +45,7 @@ struct DifferenceInlineTests {
         guard difference.analyze(options: .init(pairing: .none)).pairs.isEmpty else {
             throw Failure.mismatch
         }
+        DifferenceAlignmentSmoke.run()
         print("difference inline analysis passed")
     }
 }

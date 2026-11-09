@@ -14,7 +14,7 @@ public extension TextDifference {
             public var maxCells: Int
 
             public init(
-                pairing: DifferenceLayout.Pairing = .similarity(minimum: 0.45),
+                pairing: DifferenceLayout.Pairing = .aligned(minimum: 0.45),
                 inline: Inline = .characters,
                 maxCells: Int = 65_536
             ) {
@@ -53,6 +53,8 @@ public extension TextDifference {
             case .none:
                 return removed.indices.map { Match(old: $0, new: nil) }
                     + added.indices.map { Match(old: nil, new: $0) }
+            case .aligned(let minimum, let maxCells):
+                return align(removed, added, minimum: minimum, maxCells: maxCells)
             case .similarity(let minimum):
                 let threshold = minimum.isFinite ? max(0, min(1, minimum)) : 1
                 var result: [Match] = []

@@ -8,6 +8,9 @@ public extension DifferenceLayout {
 
     enum Pairing: Sendable, Hashable {
         case none
+        /// Bounded, order-preserving line alignment with greedy fallback.
+        case aligned(minimum: Double, maxCells: Int = 16_384)
+        /// Original lookahead-free matcher retained for compatibility.
         case similarity(minimum: Double)
     }
 
@@ -56,7 +59,7 @@ public extension DifferenceLayout {
         _ difference: TextDifference,
         mode: Mode = .unified,
         options: DifferenceRenderOptions = .unified,
-        pairing: Pairing = .similarity(minimum: 0.45)
+        pairing: Pairing = .aligned(minimum: 0.45)
     ) -> Projection {
         var rows: [Row] = []
         if options.showHeader {
