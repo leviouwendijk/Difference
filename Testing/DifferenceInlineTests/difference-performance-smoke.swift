@@ -55,6 +55,13 @@ enum DifferencePerformanceSmoke {
                             new: updated.joined(separator: "\n") + "\n").changeCount
         }
         let complete = changedBlock(96)
+        let prepared = complete.analyze(options: .init(inline: .none))
+        measure("projection-precomputed-96", repetitions: 5) {
+            DifferenceLayout.project(prepared, mode: .split, options: .full).rows.count
+        }
+        measure("direct projection-96", repetitions: 3) {
+            DifferenceLayout.project(complete, mode: .split, options: .full).rows.count
+        }
         measure("analysis + projection-96", repetitions: 3) {
             let analysis = complete.analyze(options: .init(inline: .none))
             return DifferenceLayout.project(analysis, mode: .split, options: .full).rows.count

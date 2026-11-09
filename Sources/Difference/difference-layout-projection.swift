@@ -61,6 +61,40 @@ public extension DifferenceLayout {
         options: DifferenceRenderOptions = .unified,
         pairing: Pairing = .aligned(minimum: 0.45)
     ) -> Projection {
+        if mode == .split {
+            // The raw convenience path computes alignment once, with no inline spans.
+            return project(
+                difference.analyze(options: .init(pairing: pairing, inline: .none)),
+                mode: mode,
+                options: options
+            )
+        }
+        return projectRows(difference, mode: mode, options: options,
+                           alignments: [], pairs: [])
+    }
+
+    /// Reuse the alignment and optional UTF-8 spans already held by analysis.
+    static func project(
+        _ analysis: TextDifference.Analysis,
+        mode: Mode = .split,
+        options: DifferenceRenderOptions = .unified
+    ) -> Projection {
+        projectRows(analysis.difference, mode: mode, options: options,
+                    alignments: analysis.alignments, pairs: analysis.pairs)
+    }
+
+    private static func projectRows(
+        _ difference: TextDifference,
+        mode: Mode,
+        options: DifferenceRenderOptions,
+        alignments: [TextDifference.Analysis.Alignment],
+        pairs: [TextDifference.Analysis.Pair]
+    ) -> Projection {
+        let byStart = Dictionary(uniqueKeysWithValues: alignments.map {
+            ($0.range.lowerBound, $0)
+        })
+        let oldSpans = Dictionary(uniqueKeysWithValues: pairs.map { ($0.oldLine, $0.old) })
+        let newSpans = Dictionary(uniqueKeysWithValues: pairs.map { ($0.newLine, $0.new) })
         var rows: [Row] = []
         if options.showHeader {
             rows.append(.init(kind: .headerOld, old: nil, new: nil, text: difference.oldName))
@@ -69,7 +103,8 @@ public extension DifferenceLayout {
         let all = options.showUnchangedLines || options.contextLineCount == .max
         let hunks = difference.hunks(context: all ? .max : options.contextLineCount)
         if hunks.isEmpty, all {
-            append(difference.lines[...], mode: mode, pairing: pairing, to: &rows)
+            append(difference.lines[...], mode: mode, alignments: byStart,
+                   oldSpans: oldSpans, newSpans: newSpans, to: &rows)
         } else {
             var previous = 0
             for hunk in hunks {
@@ -83,7 +118,8 @@ public extension DifferenceLayout {
                 if options.showHunkHeaders {
                     rows.append(.init(kind: .hunk(hunk), old: nil, new: nil, text: hunk.header))
                 }
-                append(difference.lines[hunk.indices], mode: mode, pairing: pairing, to: &rows)
+                append(difference.lines[hunk.indices], mode: mode, alignments: byStart,
+                       oldSpans: oldSpans, newSpans: newSpans, to: &rows)
                 previous = hunk.indices.upperBound
             }
             if previous < difference.lines.count, !hunks.isEmpty {
@@ -98,33 +134,6 @@ public extension DifferenceLayout {
             rows.append(.init(kind: .endOfFile, old: nil, new: nil, text: "EOF"))
         }
         return .init(mode: mode, rows: rows)
-    }
-
-    /// Attach source-bound UTF-8 spans to the existing semantic row projection.
-    static func project(
-        _ analysis: TextDifference.Analysis,
-        mode: Mode = .split,
-        options: DifferenceRenderOptions = .unified
-    ) -> Projection {
-        let projection = project(
-            analysis.difference,
-            mode: mode,
-            options: options,
-            pairing: analysis.pairing
-        )
-        let old = Dictionary(uniqueKeysWithValues: analysis.pairs.map { ($0.oldLine, $0.old) })
-        let new = Dictionary(uniqueKeysWithValues: analysis.pairs.map { ($0.newLine, $0.new) })
-        return .init(mode: mode, rows: projection.rows.map { row in
-            let before = row.old.map { cell in
-                Cell(line: cell.line, text: cell.text, role: cell.role,
-                     spans: old[cell.line] ?? [])
-            }
-            let after = row.new.map { cell in
-                Cell(line: cell.line, text: cell.text, role: cell.role,
-                     spans: new[cell.line] ?? [])
-            }
-            return .init(kind: row.kind, old: before, new: after, text: row.text)
-        })
     }
 
     private static func appendCollapsed(
@@ -150,36 +159,49 @@ public extension DifferenceLayout {
     private static func append(
         _ source: ArraySlice<DifferenceLine>,
         mode: Mode,
-        pairing: Pairing,
+        alignments: [Int: TextDifference.Analysis.Alignment],
+        oldSpans: [Int: [TextDifference.Analysis.Span]],
+        newSpans: [Int: [TextDifference.Analysis.Span]],
         to rows: inout [Row]
     ) {
-        let lines = Array(source)
-        var index = 0
-        while index < lines.count {
-            let line = lines[index]
+        var index = source.startIndex
+        while index < source.endIndex {
+            let line = source[index]
             if line.operation == .equal {
-                rows.append(content(old: cell(line, old: true), new: cell(line, old: false)))
+                rows.append(content(
+                    old: cell(line, old: true, spans: oldSpans),
+                    new: cell(line, old: false, spans: newSpans)
+                ))
                 index += 1
                 continue
             }
             if mode == .unified {
                 rows.append(content(
-                    old: line.operation == .delete ? cell(line, old: true) : nil,
-                    new: line.operation == .insert ? cell(line, old: false) : nil
+                    old: line.operation == .delete ? cell(line, old: true, spans: oldSpans) : nil,
+                    new: line.operation == .insert ? cell(line, old: false, spans: newSpans) : nil
                 ))
                 index += 1
                 continue
             }
+
             let start = index
-            while index < lines.count, lines[index].operation != .equal {
+            while index < source.endIndex, source[index].operation != .equal {
                 index += 1
             }
-            let group = lines[start..<index]
-            let removed = group.filter { $0.operation == .delete }
-            let added = group.filter { $0.operation == .insert }
-            for match in TextDifference.Analysis.matches(removed, added, pairing: pairing) {
-                let old = match.old.flatMap { cell(removed[$0], old: true) }
-                let new = match.new.flatMap { cell(added[$0], old: false) }
+            guard let alignment = alignments[start],
+                  alignment.range == (start..<index) else {
+                // Defensive lossless fallback for an incomplete or mismatched analysis.
+                for line in source[start..<index] {
+                    rows.append(content(
+                        old: line.operation == .delete ? cell(line, old: true, spans: oldSpans) : nil,
+                        new: line.operation == .insert ? cell(line, old: false, spans: newSpans) : nil
+                    ))
+                }
+                continue
+            }
+            for step in alignment.steps {
+                let old = step.oldIndex.flatMap { cell(source[$0], old: true, spans: oldSpans) }
+                let new = step.newIndex.flatMap { cell(source[$0], old: false, spans: newSpans) }
                 rows.append(content(old: old, new: new))
             }
         }
@@ -189,10 +211,14 @@ public extension DifferenceLayout {
         .init(kind: .content, old: old, new: new, text: "")
     }
 
-    private static func cell(_ line: DifferenceLine, old: Bool) -> Cell? {
+    private static func cell(
+        _ line: DifferenceLine,
+        old: Bool,
+        spans: [Int: [TextDifference.Analysis.Span]]
+    ) -> Cell? {
         guard let number = old ? line.oldLine : line.newLine else { return nil }
         let role: Role = line.operation == .equal ? .equal : (old ? .delete : .insert)
-        return .init(line: number, text: line.text, role: role)
+        return .init(line: number, text: line.text, role: role, spans: spans[number] ?? [])
     }
 
 }

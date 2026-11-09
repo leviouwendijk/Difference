@@ -35,9 +35,22 @@ public extension TextDifference {
             public let new: [Span]
         }
 
+        /// One changed run, with ordered operations referencing TextDifference.lines.
+        /// The indices remain stable across hunk and context projections.
+        public struct Alignment: Sendable, Hashable {
+            public struct Step: Sendable, Hashable {
+                public let oldIndex: Int?
+                public let newIndex: Int?
+            }
+
+            public let range: Range<Int>
+            public let steps: [Step]
+        }
+
         public let difference: TextDifference
         public let pairing: DifferenceLayout.Pairing
         public let pairs: [Pair]
+        public let alignments: [Alignment]
 
         struct Match {
             let old: Int?
@@ -191,6 +204,7 @@ public extension TextDifference {
 
     func analyze(options: Analysis.Options = .init()) -> Analysis {
         var pairs: [Analysis.Pair] = []
+        var alignments: [Analysis.Alignment] = []
         var index = 0
         while index < lines.count {
             if lines[index].operation == .equal {
@@ -202,20 +216,30 @@ public extension TextDifference {
                 index += 1
             }
             let group = lines[start..<index]
-            let removed = group.filter { $0.operation == .delete }
-            let added = group.filter { $0.operation == .insert }
-            for match in Analysis.matches(removed, added, pairing: options.pairing) {
-                guard let oldIndex = match.old, let newIndex = match.new,
-                      let oldLine = removed[oldIndex].oldLine,
-                      let newLine = added[newIndex].newLine else { continue }
+            let removedIndices = group.indices.filter { lines[$0].operation == .delete }
+            let addedIndices = group.indices.filter { lines[$0].operation == .insert }
+            let removed = removedIndices.map { lines[$0] }
+            let added = addedIndices.map { lines[$0] }
+            let steps = Analysis.matches(removed, added, pairing: options.pairing).map { match in
+                Analysis.Alignment.Step(
+                    oldIndex: match.old.map { removedIndices[$0] },
+                    newIndex: match.new.map { addedIndices[$0] }
+                )
+            }
+            alignments.append(.init(range: start..<index, steps: steps))
+
+            for step in steps {
+                guard let oldIndex = step.oldIndex, let newIndex = step.newIndex,
+                      let oldLine = lines[oldIndex].oldLine,
+                      let newLine = lines[newIndex].newLine else { continue }
                 let ranges: (old: [Analysis.Span], new: [Analysis.Span])
                 switch options.inline {
                 case .none:
                     ranges = ([], [])
                 case .characters:
                     ranges = Analysis.changes(
-                        old: removed[oldIndex].text,
-                        new: added[newIndex].text,
+                        old: lines[oldIndex].text,
+                        new: lines[newIndex].text,
                         oldLine: oldLine,
                         newLine: newLine,
                         maxCells: options.maxCells
@@ -225,6 +249,7 @@ public extension TextDifference {
                                    old: ranges.old, new: ranges.new))
             }
         }
-        return .init(difference: self, pairing: options.pairing, pairs: pairs)
+        return .init(difference: self, pairing: options.pairing,
+                     pairs: pairs, alignments: alignments)
     }
 }

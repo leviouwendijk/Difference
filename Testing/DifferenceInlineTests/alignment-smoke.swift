@@ -82,6 +82,7 @@ enum DifferenceAlignmentSmoke {
         } catch {
             preconditionFailure("difference quality smoke failed: \(error)")
         }
+        DifferenceAlignmentReuseSmoke.run()
         DifferencePerformanceSmoke.run()
         print("difference alignment smoke passed")
     }
