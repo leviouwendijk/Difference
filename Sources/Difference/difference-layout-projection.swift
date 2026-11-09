@@ -15,7 +15,21 @@ public extension DifferenceLayout {
         public let line: Int
         public let text: String
         public let role: Role
+        public let spans: [TextDifference.Analysis.Span]
+
+        public init(
+            line: Int,
+            text: String,
+            role: Role,
+            spans: [TextDifference.Analysis.Span] = []
+        ) {
+            self.line = line
+            self.text = text
+            self.role = role
+            self.spans = spans
+        }
     }
+
 
     struct Row: Sendable, Codable, Hashable {
         public enum Kind: Sendable, Codable, Hashable {
@@ -83,6 +97,33 @@ public extension DifferenceLayout {
         return .init(mode: mode, rows: rows)
     }
 
+    /// Attach source-bound UTF-8 spans to the existing semantic row projection.
+    static func project(
+        _ analysis: TextDifference.Analysis,
+        mode: Mode = .split,
+        options: DifferenceRenderOptions = .unified
+    ) -> Projection {
+        let projection = project(
+            analysis.difference,
+            mode: mode,
+            options: options,
+            pairing: analysis.pairing
+        )
+        let old = Dictionary(uniqueKeysWithValues: analysis.pairs.map { ($0.oldLine, $0.old) })
+        let new = Dictionary(uniqueKeysWithValues: analysis.pairs.map { ($0.newLine, $0.new) })
+        return .init(mode: mode, rows: projection.rows.map { row in
+            let before = row.old.map { cell in
+                Cell(line: cell.line, text: cell.text, role: cell.role,
+                     spans: old[cell.line] ?? [])
+            }
+            let after = row.new.map { cell in
+                Cell(line: cell.line, text: cell.text, role: cell.role,
+                     spans: new[cell.line] ?? [])
+            }
+            return .init(kind: row.kind, old: before, new: after, text: row.text)
+        })
+    }
+
     private static func appendCollapsed(
         _ omitted: ArraySlice<DifferenceLine>,
         label: String,
@@ -133,35 +174,10 @@ public extension DifferenceLayout {
             let group = lines[start..<index]
             let removed = group.filter { $0.operation == .delete }
             let added = group.filter { $0.operation == .insert }
-            switch pairing {
-            case .none:
-                for line in removed {
-                    rows.append(content(old: cell(line, old: true), new: nil))
-                }
-                for line in added {
-                    rows.append(content(old: nil, new: cell(line, old: false)))
-                }
-            case .similarity(let minimum):
-                let threshold = max(0, min(1, minimum))
-                var i = 0
-                var j = 0
-                while i < removed.count || j < added.count {
-                    if i < removed.count, j < added.count,
-                       similarity(removed[i].text, added[j].text) >= threshold {
-                        rows.append(content(
-                            old: cell(removed[i], old: true),
-                            new: cell(added[j], old: false)
-                        ))
-                        i += 1
-                        j += 1
-                    } else if i < removed.count {
-                        rows.append(content(old: cell(removed[i], old: true), new: nil))
-                        i += 1
-                    } else {
-                        rows.append(content(old: nil, new: cell(added[j], old: false)))
-                        j += 1
-                    }
-                }
+            for match in TextDifference.Analysis.matches(removed, added, pairing: pairing) {
+                let old = match.old.flatMap { cell(removed[$0], old: true) }
+                let new = match.new.flatMap { cell(added[$0], old: false) }
+                rows.append(content(old: old, new: new))
             }
         }
     }
@@ -176,20 +192,4 @@ public extension DifferenceLayout {
         return .init(line: number, text: line.text, role: role)
     }
 
-    private static func similarity(_ lhs: String, _ rhs: String) -> Double {
-        let left = Array(lhs)
-        let right = Array(rhs)
-        let longest = max(left.count, right.count)
-        guard longest > 0 else { return 1 }
-        var prefix = 0
-        while prefix < min(left.count, right.count), left[prefix] == right[prefix] {
-            prefix += 1
-        }
-        var suffix = 0
-        while suffix < min(left.count, right.count) - prefix,
-              left[left.count - suffix - 1] == right[right.count - suffix - 1] {
-            suffix += 1
-        }
-        return Double(prefix + suffix) / Double(longest)
-    }
 }
