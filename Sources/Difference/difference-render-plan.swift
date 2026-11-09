@@ -226,9 +226,28 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
                     text: options.border
                 )
 
-            case .bar,
-                 .marker,
-                 .text:
+            case .bar:
+                // Preserve the gutter slot occupied by change bars on source rows.
+                return .init(
+                    component: component,
+                    text: " "
+                )
+
+            case .marker:
+                // A marker placed before the border is part of the gutter.
+                // Preserve its width without displaying a change marker.
+                guard let markerIndex = options.lineComponents.firstIndex(of: .marker),
+                      let borderIndex = options.lineComponents.firstIndex(of: .border),
+                      markerIndex < borderIndex else {
+                    return nil
+                }
+
+                return .init(
+                    component: component,
+                    text: options.equalMarker
+                )
+
+            case .text:
                 return nil
             }
         }
