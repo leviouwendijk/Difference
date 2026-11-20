@@ -146,24 +146,30 @@ extension DifferenceLayout {
             return .init(
                 role: .equal,
                 text: line.text,
-                oldLine: line.oldLine,
-                newLine: line.newLine
+                coordinate: .init(
+                    old: line.oldLine,
+                    new: line.newLine
+                )
             )
 
         case .insert:
             return .init(
                 role: .insert,
                 text: line.text,
-                oldLine: line.oldLine,
-                newLine: line.newLine
+                coordinate: .init(
+                    old: line.oldLine,
+                    new: line.newLine
+                )
             )
 
         case .delete:
             return .init(
                 role: .delete,
                 text: line.text,
-                oldLine: line.oldLine,
-                newLine: line.newLine
+                coordinate: .init(
+                    old: line.oldLine,
+                    new: line.newLine
+                )
             )
         }
     }

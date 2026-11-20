@@ -281,8 +281,8 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
         LinePresentation.Gutter.numberWidth(
             values: layout.lines.flatMap { line in
                 [
-                    line.oldLine,
-                    line.newLine,
+                    line.coordinate.old,
+                    line.coordinate.new,
                 ]
             }
         )
@@ -321,12 +321,12 @@ public struct DifferenceRenderPlan: Sendable, Hashable {
         LinePresentation.Gutter(
             columns: [
                 .number(
-                    line.oldLine,
+                    line.coordinate.old,
                     width: width,
                     missingCharacter: missingCharacter
                 ),
                 .number(
-                    line.newLine,
+                    line.coordinate.new,
                     width: width,
                     missingCharacter: missingCharacter
                 ),
