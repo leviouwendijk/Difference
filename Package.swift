@@ -5,6 +5,13 @@ import PackageDescription
 let package = Package(
     name: "Difference",
     products: [
+        // SwiftUI views for difference plans; Apple platforms only.
+        .library(
+            name: "DifferenceSwiftUI",
+            targets: [
+                "DifferenceSwiftUI",
+            ]
+        ),
         .library(
             name: "Difference",
             targets: [
@@ -41,6 +48,12 @@ let package = Package(
                     name: "Schema",
                     package: "Schema"
                 ),
+            ]
+        ),
+        .target(
+            name: "DifferenceSwiftUI",
+            dependencies: [
+                "Difference",
             ]
         ),
     ]
