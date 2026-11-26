@@ -1,4 +1,5 @@
 import Difference
+import Primitives
 
 enum RegressionFailure: Error {
     case assertion(String)
@@ -13,6 +14,34 @@ func expect(
             message
         )
     }
+}
+
+/// A row's columns come from its ancestors below the root: `│` while an
+/// ancestor has later siblings, blank once it was the last.
+func treeBranchesFollowEachAncestor() throws {
+    typealias Node = Tree<TreeDifference<String>.Entry>.Node
+    func node(_ id: String, _ children: [Node] = []) -> Node {
+        .init(.init(id: id, label: id, change: .added, before: nil, after: id), children: children)
+    }
+    let difference = TreeDifference<String>(
+        tree: .init(roots: [
+            node("root", [
+                node("a", [node("a1"), node("a2")]),
+                node("b", [node("b1")]),
+            ]),
+        ]),
+        source: .planned
+    )
+    let rendered = TreeDifferenceRenderer.render(difference)
+    let expected = [
+        "+ root",
+        "+ ├── a",
+        "+ │   ├── a1",
+        "+ │   └── a2",
+        "+ └── b",
+        "+     └── b1",
+    ].joined(separator: "\n")
+    try expect(rendered == expected, "tree branches:\n\(rendered)")
 }
 
 func basicRendererPreservesLegacyPlanRendering() throws {
@@ -415,5 +444,6 @@ try emptyDifferenceLayoutExposesNoChanges()
 try differenceAlternativesMaintainIndependentCandidates()
 try treeDifferenceAlternativesKeepCandidateTopology()
 try semantic_difference_regressions()
+try treeBranchesFollowEachAncestor()
 print("Semantic difference regressions: passed")
 print("DifferenceTests: passed")

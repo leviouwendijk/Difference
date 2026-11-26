@@ -125,7 +125,8 @@ public struct TreeDifferenceRenderPlan: Sendable, Hashable {
         show_movement_reasons: Bool = false
     ) -> Self {
         .init(lines: layout.lines.map { line in
-            let branch = line.ancestor_last.dropLast().map { $0 ? "    " : "│   " }.joined()
+            // Roots draw no connector, so the root ancestor gets no column.
+            let branch = line.ancestor_last.dropFirst().map { $0 ? "    " : "│   " }.joined()
                 + (line.depth > 0 ? (line.is_last_child ? "└── " : "├── ") : "")
             let marker: String
             switch line.change {
